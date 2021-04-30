@@ -1,47 +1,49 @@
 import qualified Data.Map as M
-import System.Exit (exitSuccess)
+import           System.Exit (exitSuccess)
 
-import XMonad
-import XMonad.Actions.CopyWindow
-import XMonad.Actions.CycleWS
-import XMonad.Actions.DynamicWorkspaces
+import           XMonad
+import           XMonad.Actions.CopyWindow
+import           XMonad.Actions.CycleWS
+import           XMonad.Actions.DynamicWorkspaces
 import qualified XMonad.Actions.FlexibleResize as Flex
-import XMonad.Actions.GridSelect
-import XMonad.Actions.Promote
-import XMonad.Actions.ShowText
-import XMonad.Actions.SinkAll
-import XMonad.Actions.UpdatePointer
-import XMonad.Actions.WindowBringer
-import XMonad.Hooks.DynamicLog
-import XMonad.Hooks.EwmhDesktops (ewmh, ewmhDesktopsStartup)
-import XMonad.Hooks.FadeInactive
-import XMonad.Hooks.ManageDocks
-import XMonad.Hooks.ManageHelpers
-import XMonad.Hooks.SetWMName
-import XMonad.Hooks.UrgencyHook
-import XMonad.Layout.BinarySpacePartition as BSP hiding (Swap)
-import XMonad.Layout.Fullscreen
-import XMonad.Layout.NoBorders
-import XMonad.Layout.NoFrillsDecoration
-import XMonad.Layout.Renamed
-import XMonad.Layout.ShowWName
-import XMonad.Layout.Simplest
-import XMonad.Layout.SimplestFloat
-import XMonad.Layout.SubLayouts
-import XMonad.Layout.Tabbed
-import XMonad.Layout.TwoPane
-import XMonad.Layout.WindowNavigation
-import XMonad.Prompt
-import XMonad.Prompt.Man
-import XMonad.Prompt.Pass
+import           XMonad.Actions.GridSelect
+import           XMonad.Actions.Promote
+import           XMonad.Actions.ShowText
+import           XMonad.Actions.SinkAll
+import           XMonad.Actions.UpdatePointer
+import           XMonad.Actions.WindowBringer
+import           XMonad.Hooks.DynamicLog
+import           XMonad.Hooks.EwmhDesktops (ewmh, ewmhDesktopsStartup)
+import           XMonad.Hooks.FadeInactive
+import           XMonad.Hooks.ManageDocks
+import           XMonad.Hooks.ManageHelpers
+import           XMonad.Hooks.SetWMName
+import           XMonad.Hooks.UrgencyHook
+import           XMonad.Layout.BinarySpacePartition as BSP hiding (Swap)
+import           XMonad.Layout.Drawer
+import           XMonad.Layout.Fullscreen
+import           XMonad.Layout.Hidden
+import           XMonad.Layout.NoBorders (noBorders, smartBorders)
+import           XMonad.Layout.NoFrillsDecoration
+import           XMonad.Layout.Renamed
+import           XMonad.Layout.ShowWName
+import           XMonad.Layout.Simplest
+import           XMonad.Layout.SimplestFloat
+import           XMonad.Layout.SubLayouts
+import           XMonad.Layout.Tabbed
+import           XMonad.Layout.TwoPane
+import           XMonad.Layout.WindowNavigation
+import           XMonad.Prompt
+import           XMonad.Prompt.Man
+import           XMonad.Prompt.Pass
 import qualified XMonad.StackSet as W
-import XMonad.Util.Cursor
-import XMonad.Util.EZConfig
-import XMonad.Util.Run
-import XMonad.Util.Scratchpad
-import XMonad.Util.SpawnOnce
-import XMonad.Util.Types
-import XMonad.Util.Ungrab
+import           XMonad.Util.Cursor
+import           XMonad.Util.EZConfig
+import           XMonad.Util.Run
+import           XMonad.Util.Scratchpad
+import           XMonad.Util.SpawnOnce
+import           XMonad.Util.Types
+import           XMonad.Util.Ungrab
 
 -- Colors
 base03     = "#002b36"
@@ -61,10 +63,10 @@ red        = "#dc322f"
 magenta    = "#dc3682"
 violet     = "#6c71c4"
 blue       = "#268bd2"
-light_blue = "#51AFEF"
-dark_blue  = "#3939ff"
+lightBlue  = "#51AFEF"
+darkBlue   = "#3939ff"
 cyan       = "#2aa198"
-light_cyan = "#1ABC9C"
+lightCyan  = "#1ABC9C"
 green      = "#859900"
 
 -- Themes
@@ -115,7 +117,7 @@ promptTheme =
     , bgHLight = blue
     , borderColor = base03
     , promptBorderWidth = 0
-    , height = 20
+    , height = 28
     , position = Top
     }
 
@@ -124,34 +126,33 @@ promptTheme =
   -- $ renamed [Replace "Tabbed"]
   -- $ noBorders (tabbed shrinkText tabTheme)
 
-bspLayout = avoidStruts
-  $ renamed [CutWordsLeft 1]
-  $ noFrillsDeco shrinkText topBarTheme -- topbar
-  $ windowNavigation
-  $ renamed [Replace "BSP"]
-  $ addTabs shrinkText tabTheme
-  $ subLayout [] Simplest
-  $ BSP.emptyBSP
-
--- floatLayout = avoidStruts
---   $ renamed [Replace "Float"]
---   $ windowNavigation
---   $ simplestFloat
-
---twoPaneLayout = avoidStruts
-  -- $ renamed [Replace "Two"]
+--bspLayout = avoidStruts
+  -- $ renamed [CutWordsLeft 1]
+  -- $ noFrillsDeco shrinkText topBarTheme -- topbar
   -- $ windowNavigation
-  -- $ TwoPane delta ratio
-  --where
-    --delta = 3/100
-    --ratio = 1/2
+  -- $ renamed [Replace "BSP"]
+  -- $ addTabs shrinkText tabTheme
+  -- $ subLayout [] Simplest
+  -- $ noBorders
+  -- $ BSP.emptyBSP
+
+twoPaneLayout = avoidStruts
+   $ renamed [Replace "Two"]
+   $ windowNavigation
+   $ TwoPane delta ratio
+  where
+    delta = 3/100
+    ratio = 1/2
 
 
 myLayoutHook =
-  bspLayout ||| noBorders Full
+  hiddenWindows $
+  smartBorders $
+  noBorders Full
+  ||| twoPaneLayout
 
 exitHook :: IO ()
-exitHook = do
+exitHook =
   return ()
 -------------------------------------------------------------
 ------------------- user settings ---------------------------
@@ -180,13 +181,16 @@ myScreenshot = "flameshot gui"
 -- A lock screen
 myScreenlock = "i3lock-fancy"
 
+hibernate = "systemctl hibernate"
+
 -- my Emacs
 myEmacsClientCommandX = "emacsclient --socket-name server  -a \"alacritty -e vim\" -c -n"
 myEmacsClientCommand = "alacritty --socket-name server -e \"emacsclient\" \"-avim\" \"-nw\""
 
 -- Workspaces
 -- The default number of workspaces and their names.
-myWorkspaces = map show [1..9]
+-- myWorkspaces = map show [1..9]
+myWorkspaces = zipWith (\x y -> show x ++ ":" ++ y) [1..9] ["term", "web", "box", "code", "doc", "md", "emacs", "game", "music"]
 
 
 -- Manage hook
@@ -214,7 +218,7 @@ myManageHook =
     --   distance from top edge  = 12.5%
     --   width                   = 75%
     --   height                  = 75%
-    , scratchpadManageHook (W.RationalRect 0.125 0.125 0.75 0.75)
+    , scratchpadManageHook (W.RationalRect 0.05 0.05 0.90 0.90)
     ]
 
 -- Startup hook
@@ -222,6 +226,8 @@ myManageHook =
 myStartupHook = do
   -- set keyboard first
   spawn "~/mhc/scripts/tools/kbd/setkbd.sh &"
+  -- init touchpad settings
+  spawn "~/mhc/scripts/tools/touchpad/touchpad-init.sh &"
   -- run autostart script parallelly
   spawn "~/mhc/scripts/autostart.sh &"
   ewmhDesktopsStartup
@@ -233,19 +239,19 @@ myStartupHook = do
   -- Screenshot app
   spawnOnce "flameshot"
   -- Status bar, polybar
-  spawnOnce "~/.config/polybar/launch.sh"
+# spawnOnce "~/.config/polybar/launch.sh"
   -- spawnOnce "pkill qv2ray; pkill v2ray; qv2ray"
 
 -------------------------------------------------------------
 --------------------------- mouse ---------------------------
 
 -- Mouse bindings
-myMouseBindings (XConfig {XMonad.modMask = modm}) =
+myMouseBindings XConfig {XMonad.modMask = modm} =
   M.fromList
-    [ ((modm, button1), (\w -> focus w >> mouseMoveWindow w))
-    , ((modm, button2), (\w -> focus w >> windows W.swapMaster))
+    [ ((modm, button1), \w -> focus w >> mouseMoveWindow w)
+    , ((modm, button2), \w -> focus w >> windows W.swapMaster)
     -- Resize floating windows from any corner.
-    , ((modm, button3), (\w -> focus w >> Flex.mouseResizeWindow w))
+    , ((modm, button3), \w -> focus w >> Flex.mouseResizeWindow w)
     ]
 
 
@@ -282,7 +288,8 @@ myKeybindings =
     -- Standard programs
     , ("M-s", spawn myLauncher)
     , ("M-<Return>", spawn myTerminal)
-    , ("M-S-<Return>", scratchpadSpawnActionCustom $ myScratchpadTerminal)
+    -- , ("M-S-<Return>", scratchpadSpawnActionCustom $ myScratchpadTerminal)
+    , ("M-q", scratchpadSpawnActionCustom myScratchpadTerminal)
     , ("M-e", spawn "~/mhc/scripts/tools/pickemoji")
 
     -- Functional keys
@@ -295,7 +302,10 @@ myKeybindings =
     , ("<XF86ScreenSaver>", spawn "xset dpms force off")
     , ("<XF86TouchpadToggle>", spawn "~/mhc/scripts/tools/touchpad/touchpad-toggle.sh")
     , ("M-C-S-l", spawn myScreenlock)
+    , ("M-C-S-h", spawn hibernate)
     , ("M-c", spawn "xcolor | xsel -b")
+    , ("M-<Backspace>", withFocused hideWindow)
+    , ("M-S-<Backspace>", popNewestHiddenWindow)
 
     -- Layouts
     -- Using M-S-<Space> to reset the layout on the current workspace to default.
@@ -318,8 +328,8 @@ myKeybindings =
     , ("M-S-c", kill)
 
     -- Urgent event happened
-    , ("M-<Backspace>", focusUrgent)
-    , ("M-S-<Backspace>", clearUrgents)
+    , ("M-C-<Backspace>", focusUrgent)
+    , ("M-C-S-<Backspace>", clearUrgents)
 
     -- Directional navigation of windows
     , ("M-h", sendMessage $ Go L)
@@ -355,6 +365,8 @@ myKeybindings =
 
     -- Prompts
     , ("M-m p", passPrompt promptTheme)
+    , ("M-m g p", passGenerateAndCopyPrompt promptTheme)
+    , ("M-m d p", passRemovePrompt promptTheme)
     , ("M-m m", manPrompt promptTheme)
     , ("M-m t", spawn myEmacsClientCommand)
     , ("M-m e", spawn myEmacsClientCommandX)
@@ -362,8 +374,7 @@ myKeybindings =
 
 
 myForbiddenKeys =
-  [ "M-q"
-  , "M-w"
+  [ "M-w"
   , "M-S-w"
   , "M-S-e"
   , "M-S-r"
@@ -371,22 +382,22 @@ myForbiddenKeys =
   ]
 
 -- Run xmonad with all the defaults we set up.
-main = do
+main =
   xmonad . docks $ -- automatically manage dock type programs, such as statusbar
-    ewmh $ withUrgencyHook NoUrgencyHook
-      def
-        { terminal = myTerminal
-        , focusFollowsMouse = myFocusFollowsMouse
-        , focusedBorderColor = dark_blue
-        -- Rebind Mod to the Windows key
-        , modMask = mod4Mask
-        , mouseBindings = myMouseBindings
-        , workspaces = myWorkspaces
-        , manageHook = myManageHook
-        -- Check invalid/duplicated keybindings first
-        , startupHook = checkKeymap def myKeybindings >> myStartupHook
-        , handleEventHook = fullscreenEventHook <+> handleTimerEvent
-        , layoutHook = myLayoutHook
-        } `additionalKeysP`
-    myKeybindings `removeKeysP`
-    myForbiddenKeys
+  ewmh $ withUrgencyHook NoUrgencyHook
+    def
+      { terminal = myTerminal
+      , focusFollowsMouse = myFocusFollowsMouse
+      , focusedBorderColor = darkBlue
+      -- Rebind Mod to the Windows key
+      , modMask = mod4Mask
+      , mouseBindings = myMouseBindings
+      , workspaces = myWorkspaces
+      , manageHook = myManageHook
+      -- Check invalid/duplicated keybindings first
+      , startupHook = checkKeymap def myKeybindings >> myStartupHook
+      , handleEventHook = fullscreenEventHook <+> handleTimerEvent
+      , layoutHook = myLayoutHook
+      } `additionalKeysP`
+  myKeybindings `removeKeysP`
+  myForbiddenKeys
